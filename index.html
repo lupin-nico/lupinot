@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Control Agrícola Cerezas</title>
+
+<!-- LIBRERIAS -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial, Helvetica, sans-serif;
+}
+
+body{
+    background:#f2f6f1;
+    overflow:hidden;
+}
+
+/* LOGIN */
+
+#loginScreen{
+    width:100%;
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#2e7d32,#66bb6a);
+}
+
+.login-box{
+    width:350px;
+    background:white;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.2);
+}
+
+.login-box h1{
+    text-align:center;
+    margin-bottom:25px;
+    color:#2e7d32;
+}
+
+.login-box input{
+    width:100%;
+    padding:15px;
+    margin-bottom:15px;
+    border:none;
+    border-radius:12px;
+    background:#f0f0f0;
+    font-size:16px;
+}
+
+.login-box button{
+    width:100%;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:#2e7d32;
+    color:white;
+    font-size:18px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.login-box button:hover{
+    background:#1b5e20;
+}
+
+/* MENU */
+
+#menuScreen{
+    display:none;
+    width:100%;
+    height:100vh;
+    padding:20px;
+    overflow-y:auto;
+}
+
+.title{
+    text-align:center;
+    margin-bottom:20px;
+    color:#2e7d32;
+}
+
+.cuarteles{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:15px;
+}
+
+.cuartel-btn{
+    height:100px;
+    border:none;
+    border-radius:20px;
+    background:white;
+    font-size:24px;
+    cursor:pointer;
+    transition:.2s;
+    box-shadow:0 5px 15px rgba(0,0,0,.1);
+}
+
+.cuartel-btn:hover{
+    transform:scale(1.05);
+    background:#dcedc8;
+}
+
+/* TABLA */
+
+#tableScreen{
+    display:none;
+    width:100%;
+    height:100vh;
+    overflow:auto;
+    background:#f5f5f5;
+    padding:15px;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:15px;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.back-btn{
+    background:#2e7d32;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+.back-btn:hover{
+    background:#1b5e20;
+}
+
+.stats{
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.stat{
+    background:white;
+    padding:10px 15px;
+    border-radius:12px;
+    font-weight:bold;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
+}
+
+#infoUsuario{
+    background:white;
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:15px;
+    box-shadow:0 2px 10px rgba(0,0,0,.1);
+    line-height:1.8;
+    font-weight:bold;
+}
+
+.table-container{
+    overflow:auto;
+    border-radius:15px;
+}
+
+table{
+    border-collapse:collapse;
+    background:white;
+}
+
+th, td{
+    border:1px solid #ddd;
+    min-width:80px;
+    height:55px;
+    text-align:center;
+    font-size:14px;
+}
+
+th{
+    position:sticky;
+    top:0;
+    background:#2e7d32;
+    color:white;
+    z-index:5;
+}
+
+.row-header{
+    background:#f1f1f1;
+    font-weight:bold;
+    position:sticky;
+    left:0;
+    z-index:4;
+}
+
+.cell{
+    cursor:pointer;
+    transition:.2s;
+}
+
+.cell:hover{
+    opacity:.8;
+}
+
+.viva{
+    background:#66bb6a;
+    color:white;
+}
+
+.media{
+    background:#fdd835;
+    color:black;
+}
+
+.muerta{
+    background:#e53935;
+    color:white;
+}
+
+/* POPUP */
+
+.popup{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.4);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:999;
+}
+
+.popup-box{
+    background:white;
+    padding:20px;
+    border-radius:20px;
+    width:300px;
+}
+
+.popup-box h2{
+    text-align:center;
+    margin-bottom:15px;
+}
+
+.popup-box button{
+    width:100%;
+    padding:15px;
+    margin-bottom:10px;
+    border:none;
+    border-radius:12px;
+    font-size:18px;
+    cursor:pointer;
+}
+
+.green{
+    background:#66bb6a;
+    color:white;
+}
+
+.yellow{
+    background:#fdd835;
+}
+
+.red{
+    background:#e53935;
+    color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+
+<div id="loginScreen">
+
+    <div class="login-box">
+
+        <h1>🍒 Control Agrícola</h1>
+
+        <input type="text" id="user" placeholder="Usuario">
+
+        <input type="password" id="pass" placeholder="Contraseña">
+
+        <button onclick="login()">
+            Ingresar
+        </button>
+
+    </div>
+
+</div>
+
+<!-- MENU -->
+
+<div id="menuScreen">
+
+    <h1 class="title">🍒 Selecciona un Cuartel</h1>
+
+    <div class="cuarteles" id="cuarteles"></div>
+
+</div>
+
+<!-- TABLA -->
+
+<div id="tableScreen">
+
+    <div class="topbar">
+
+        <button class="back-btn" onclick="volverMenu()">
+            ⬅ Volver
+        </button>
+
+        <button class="back-btn" onclick="exportarExcel()">
+            📊 Excel
+        </button>
+
+        <button class="back-btn" onclick="exportarPDF()">
+            📄 PDF
+        </button>
+
+        <button class="back-btn" onclick="exportarPNG()">
+            🖼 PNG
+        </button>
+
+        <h2 id="cuartelTitle">Cuartel 301</h2>
+
+        <div class="stats">
+
+            <div class="stat">
+                🟢 <span id="vivas">0</span>
+            </div>
+
+            <div class="stat">
+                🟡 <span id="medias">0</span>
+            </div>
+
+            <div class="stat">
+                🔴 <span id="muertas">0</span>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- INFO USUARIO -->
+
+    <div id="infoUsuario">
+
+        👨 Usuario:
+        <span id="nombreUsuario"></span>
+
+        <br>
+
+        📅 Fecha:
+        <span id="fechaUsuario"></span>
+
+        <br>
+
+        📍 GPS:
+        <span id="gpsUsuario"></span>
+
+    </div>
+
+    <div class="table-container">
+
+        <table id="tabla"></table>
+
+    </div>
+
+</div>
+
+<!-- POPUP -->
+
+<div class="popup" id="popup">
+
+    <div class="popup-box">
+
+        <h2>Estado Planta</h2>
+
+        <button class="green" onclick="setEstado('viva')">
+            🟢 Viva
+        </button>
+
+        <button class="yellow" onclick="setEstado('media')">
+            🟡 Media Mala
+        </button>
+
+        <button class="red" onclick="setEstado('muerta')">
+            🔴 Muerta
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+const usuarios = [
+    {
+        usuario:"nicolas",
+        password:"nicolas"
+    }
+];
+
+let usuarioActual = "";
+let fechaActual = "";
+let gpsActual = "";
+
+let selectedCell = null;
+let currentCuartel = null;
+
+/* LOGIN */
+
+function login(){
+
+    let user = document
+        .getElementById("user")
+        .value
+        .toLowerCase()
+        .trim();
+
+    let pass = document
+        .getElementById("pass")
+        .value
+        .toLowerCase()
+        .trim();
+
+    let valid = usuarios.find(u =>
+        u.usuario === user &&
+        u.password === pass
+    );
+
+    if(valid){
+
+        usuarioActual = user;
+
+        fechaActual =
+            new Date().toLocaleString();
+
+        obtenerGPS();
+
+        document.getElementById("loginScreen")
+        .style.display = "none";
+
+        document.getElementById("menuScreen")
+        .style.display = "block";
+
+    }else{
+
+        alert("Usuario incorrecto");
+
+    }
+
+}
+
+/* GPS */
+
+function obtenerGPS(){
+
+    if(navigator.geolocation){
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(pos){
+
+                gpsActual =
+                    pos.coords.latitude +
+                    ", " +
+                    pos.coords.longitude;
+
+            },
+
+            function(){
+
+                gpsActual =
+                    "GPS no permitido";
+
+            }
+
+        );
+
+    }else{
+
+        gpsActual =
+            "GPS no disponible";
+
+    }
+
+}
+
+/* CREAR CUARTELES */
+
+const cuartelesContainer =
+document.getElementById("cuarteles");
+
+for(let i=301;i<=330;i++){
+
+    let btn = document.createElement("button");
+
+    btn.className = "cuartel-btn";
+
+    btn.innerHTML = `${i} 🍒`;
+
+    btn.onclick = ()=>abrirCuartel(i);
+
+    cuartelesContainer.appendChild(btn);
+
+}
+
+/* ABRIR CUARTEL */
+
+function abrirCuartel(numero){
+
+    currentCuartel = numero;
+
+    document.getElementById("menuScreen")
+    .style.display = "none";
+
+    document.getElementById("tableScreen")
+    .style.display = "block";
+
+    document.getElementById("cuartelTitle")
+    .innerText = `Cuartel ${numero}`;
+
+    document.getElementById("nombreUsuario")
+    .innerText = usuarioActual;
+
+    document.getElementById("fechaUsuario")
+    .innerText = fechaActual;
+
+    document.getElementById("gpsUsuario")
+    .innerText = gpsActual;
+
+    generarTabla();
+
+    cargarDatos();
+
+}
+
+/* VOLVER */
+
+function volverMenu(){
+
+    guardarDatos();
+
+    document.getElementById("tableScreen")
+    .style.display = "none";
+
+    document.getElementById("menuScreen")
+    .style.display = "block";
+
+}
+
+/* TABLA */
+
+function generarTabla(){
+
+    let tabla =
+    document.getElementById("tabla");
+
+    tabla.innerHTML = "";
+
+    let header =
+    document.createElement("tr");
+
+    let empty =
+    document.createElement("th");
+
+    empty.innerText = "Planta";
+
+    header.appendChild(empty);
+
+    for(let h=1;h<=30;h++){
+
+        let th =
+        document.createElement("th");
+
+        th.innerText = `Hilera ${h}`;
+
+        header.appendChild(th);
+
+    }
+
+    tabla.appendChild(header);
+
+    for(let p=1;p<=50;p++){
+
+        let row =
+        document.createElement("tr");
+
+        let planta =
+        document.createElement("td");
+
+        planta.className = "row-header";
+
+        planta.innerText = `Planta ${p}`;
+
+        row.appendChild(planta);
+
+        for(let h=1;h<=30;h++){
+
+            let td =
+            document.createElement("td");
+
+            td.className = "cell";
+
+            td.dataset.estado = "";
+
+            td.onclick = ()=>openPopup(td);
+
+            row.appendChild(td);
+
+        }
+
+        tabla.appendChild(row);
+
+    }
+
+}
+
+/* POPUP */
+
+function openPopup(cell){
+
+    selectedCell = cell;
+
+    document.getElementById("popup")
+    .style.display = "flex";
+
+}
+
+function setEstado(tipo){
+
+    selectedCell.classList.remove(
+        "viva",
+        "media",
+        "muerta"
+    );
+
+    selectedCell.dataset.estado = tipo;
+
+    if(tipo === "viva"){
+
+        selectedCell.classList.add("viva");
+
+        selectedCell.innerHTML = "🟢";
+
+    }
+
+    if(tipo === "media"){
+
+        selectedCell.classList.add("media");
+
+        selectedCell.innerHTML = "🟡";
+
+    }
+
+    if(tipo === "muerta"){
+
+        selectedCell.classList.add("muerta");
+
+        selectedCell.innerHTML = "🔴";
+
+    }
+
+    actualizarStats();
+
+    guardarDatos();
+
+    document.getElementById("popup")
+    .style.display = "none";
+
+}
+
+/* STATS */
+
+function actualizarStats(){
+
+    let vivas =
+    document.querySelectorAll(".viva").length;
+
+    let medias =
+    document.querySelectorAll(".media").length;
+
+    let muertas =
+    document.querySelectorAll(".muerta").length;
+
+    document.getElementById("vivas")
+    .innerText = vivas;
+
+    document.getElementById("medias")
+    .innerText = medias;
+
+    document.getElementById("muertas")
+    .innerText = muertas;
+
+}
+
+/* GUARDAR */
+
+function guardarDatos(){
+
+    if(!currentCuartel) return;
+
+    let cells =
+    document.querySelectorAll(".cell");
+
+    let datos = [];
+
+    cells.forEach(cell => {
+
+        datos.push({
+
+            estado: cell.dataset.estado,
+
+            html: cell.innerHTML,
+
+            clases: cell.className
+
+        });
+
+    });
+
+    localStorage.setItem(
+
+        "cuartel_" + currentCuartel,
+
+        JSON.stringify(datos)
+
+    );
+
+}
+
+/* CARGAR */
+
+function cargarDatos(){
+
+    let guardado = localStorage.getItem(
+        "cuartel_" + currentCuartel
+    );
+
+    if(!guardado) return;
+
+    let datos = JSON.parse(guardado);
+
+    let cells =
+    document.querySelectorAll(".cell");
+
+    cells.forEach((cell,index)=>{
+
+        if(datos[index]){
+
+            cell.dataset.estado =
+            datos[index].estado;
+
+            cell.innerHTML =
+            datos[index].html;
+
+            cell.className =
+            datos[index].clases;
+
+        }
+
+    });
+
+    actualizarStats();
+
+}
+
+/* EXPORTAR EXCEL */
+
+function exportarExcel(){
+
+    let datos = [];
+
+    let rows =
+    document.querySelectorAll("#tabla tr");
+
+    rows.forEach(row => {
+
+        let fila = [];
+
+        row.querySelectorAll("th,td")
+        .forEach(cell => {
+
+            fila.push(cell.innerText);
+
+        });
+
+        datos.push(fila);
+
+    });
+
+    let wb = XLSX.utils.book_new();
+
+    let ws =
+    XLSX.utils.aoa_to_sheet(datos);
+
+    XLSX.utils.book_append_sheet(
+        wb,
+        ws,
+        "Cuartel"
+    );
+
+    XLSX.writeFile(
+        wb,
+        `Cuartel_${currentCuartel}.xlsx`
+    );
+
+}
+
+/* EXPORTAR PDF */
+
+async function exportarPDF(){
+
+const { jsPDF } = window.jspdf;
+
+let tablaContainer =
+document.querySelector(".table-container");
+
+/* GUARDAR ESTADO ORIGINAL */
+
+let originalOverflow =
+tablaContainer.style.overflow;
+
+let originalHeight =
+tablaContainer.style.height;
+
+/* MOSTRAR TODO */
+
+tablaContainer.style.overflow = "visible";
+tablaContainer.style.height = "auto";
+
+/* ESPERAR RENDER */
+
+await new Promise(r => setTimeout(r,500));
+
+/* CAPTURA COMPLETA */
+
+let canvas = await html2canvas(
+
+    document.getElementById("tableScreen"),
+
+    {
+        scale:3,
+        useCORS:true,
+        scrollX:0,
+        scrollY:0,
+        windowWidth:
+            document.body.scrollWidth,
+        windowHeight:
+            document.body.scrollHeight
+    }
+
+);
+
+/* RESTAURAR */
+
+tablaContainer.style.overflow =
+originalOverflow;
+
+tablaContainer.style.height =
+originalHeight;
+
+let img =
+canvas.toDataURL("image/png");
+
+/* PDF GRANDE */
+
+let pdf = new jsPDF(
+
+    "l",
+    "mm",
+
+    [
+        canvas.width * 0.264583,
+        canvas.height * 0.264583
+    ]
+
+);
+
+pdf.addImage(
+
+    img,
+
+    "PNG",
+
+    0,
+    0,
+
+    canvas.width * 0.264583,
+    canvas.height * 0.264583
+
+);
+
+pdf.save(
+    `Cuartel_${currentCuartel}.pdf`
+);
+
+}
+
+/* EXPORTAR PNG */
+
+async function exportarPNG(){
+
+let tablaContainer =
+document.querySelector(".table-container");
+
+/* GUARDAR ESTADO ORIGINAL */
+
+let originalOverflow =
+tablaContainer.style.overflow;
+
+let originalHeight =
+tablaContainer.style.height;
+
+/* MOSTRAR TODO */
+
+tablaContainer.style.overflow =
+"visible";
+
+tablaContainer.style.height =
+"auto";
+
+/* ESPERAR */
+
+await new Promise(r => setTimeout(r,500));
+
+/* CAPTURA COMPLETA HD */
+
+let canvas = await html2canvas(
+
+    document.getElementById("tableScreen"),
+
+    {
+        scale:5,
+        useCORS:true,
+        scrollX:0,
+        scrollY:0,
+        windowWidth:
+            document.body.scrollWidth,
+        windowHeight:
+            document.body.scrollHeight
+    }
+
+);
+
+/* RESTAURAR */
+
+tablaContainer.style.overflow =
+originalOverflow;
+
+tablaContainer.style.height =
+originalHeight;
+
+/* DESCARGA */
+
+let link =
+document.createElement("a");
+
+link.download =
+`Cuartel_${currentCuartel}.png`;
+
+link.href =
+canvas.toDataURL("image/png",1.0);
+
+link.click();
+
+}
+
+/* AUTOGUARDAR */
+
+window.addEventListener(
+    "beforeunload",
+    ()=>{
+        guardarDatos();
+    }
+);
+
+</script>
+
+</body>
+</html>
